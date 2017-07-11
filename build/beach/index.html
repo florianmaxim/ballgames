@@ -1,0 +1,272 @@
+<html>
+	<head>
+		<title>Beach Balls</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				background-color: #ffffff;
+				margin: 0;
+				overflow: hidden;
+			}
+		</style>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+  	</head>
+  	<body>
+  	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+  	<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script>
+
+	 <script>
+
+		var renderer, scene, camera;
+		var manager, controls, effect;
+		var clock;
+
+		var ballCounter;
+		ballCounter = 0;
+
+
+		var geometry, material;
+
+
+		var bodies = [];
+		var meshes1 = [];
+		var meshes2 = [];
+		var meshes3 = [];
+
+		var world;
+
+
+		var body;
+
+		var init = function () {
+
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.antiAlias = true;
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setPixelRatio( window.innerWidth/window.innerHeight);
+			renderer.shadowMap.enabled = true;
+      renderer.shadowMapSoft = true;
+
+			document.body.appendChild( renderer.domElement );
+
+			scene = new THREE.Scene();
+			scene.fog = new THREE.Fog(0x000000,1,100);
+
+			camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500);
+			camera.position.set(5,1,15);
+
+			//START CLOCK
+			clock = new THREE.Clock();
+
+			//DIRECTIONAL LIGHT
+      var light, materials;
+      scene.add( new THREE.AmbientLight( 0x666666 ) );
+      light = new THREE.DirectionalLight( 0xffffff);
+      var d = 500;
+      light.position.set( 0, 500, 500 );
+      light.castShadow = true;
+      light.shadowMapWidth = 5000;
+      light.shadowMapHeight = 5000;
+      light.shadowCameraLeft = -d;
+      light.shadowCameraRight = d;
+      light.shadowCameraTop = d;
+      light.shadowCameraBottom = -d;
+      light.shadowCameraFar = 3*d;
+      light.shadowCameraNear = d;
+      light.shadowDarkness = 0.5;
+      scene.add( light );
+
+			geometry = new THREE.SphereGeometry( 1, 32, 32 );
+
+
+			material = new THREE.MeshPhongMaterial( {wireframe: false,  color: 0xff0000, side: THREE.DoubleSide });
+			//WORLDS PHYSICS (CANNON.JS)
+			world = new CANNON.World();
+			world.broadphase = new CANNON.NaiveBroadphase();
+			world.gravity.set( 0,-8.1,0 );
+
+			//WORLDS PHYSICS GROUNDPLANE
+			var groundShape = new CANNON.Plane();
+			var groundBody = new CANNON.Body({ mass: 0, shape: groundShape });
+			groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,1,1),-Math.PI/2);
+			world.add(groundBody);
+
+			//SEE GROUNDPLANE
+			var groundGeometry = new THREE.PlaneGeometry (300,300,32);
+			var groundMaterial = new THREE.MeshPhongMaterial ( { color: 0x0000ff} );
+			var ground = new THREE.Mesh( groundGeometry, groundMaterial);
+			ground.receiveShadow = true;
+			ground.rotation.x = -Math.PI / 2;
+			scene.add(ground);
+
+		};
+
+		var addBall = function (x,y,z){
+
+		  geometry = new THREE.SphereGeometry(
+			radius=1,
+			widthSegments=32,
+			heightSegments=32,
+			phiStart=0,
+			phiLength=Math.PI/3,
+			thetaStart=0,
+			thetaLength=6.3);
+
+			geometry2 = new THREE.SphereGeometry(
+			radius=1,
+			widthSegments=32,
+			heightSegments=32,
+			phiStart=Math.PI/3,
+			phiLength=Math.PI/3,
+			thetaStart=0,
+			thetaLength=6.3);
+
+			geometry3 = new THREE.SphereGeometry(
+			radius=1,
+			widthSegments=32,
+			heightSegments=32,
+			phiStart=-Math.PI/3,
+			phiLength=Math.PI/3,
+			thetaStart=0,
+			thetaLength=6.3);
+
+
+			//blue
+			material = new THREE.MeshPhongMaterial( {wireframe: false,  color: 0xff0000, side: THREE.DoubleSide });
+			//green
+			material2 = new THREE.MeshPhongMaterial( {wireframe: false,  color: 0x00ff00, side: THREE.DoubleSide });
+			//blue
+			material3 = new THREE.MeshPhongMaterial( {wireframe: false,  color: 0x0000ff, side: THREE.DoubleSide });
+
+
+			var mesh = new THREE.Mesh( geometry, material );
+			scene.add( mesh );
+			var mesh2 = new THREE.Mesh( geometry2, material2 );
+			scene.add( mesh2 );
+			var mesh3 = new THREE.Mesh( geometry3, material3 );
+			scene.add( mesh3 );
+
+			meshes1.push( mesh );
+			meshes2.push( mesh2 );
+			meshes3.push( mesh3 );
+
+			var radius = 1; // m
+			var sphereBody = new CANNON.Body({
+				mass: 0.05, // kg
+				position: new CANNON.Vec3(x, y, z ), // m
+				velocity: new CANNON.Vec3(1, 1, 1), // m
+				shape: new CANNON.Sphere(radius),
+
+				});
+
+		  //sphereBody.angularVelocity.set(10,100,0);
+          //sphereBody.fixedRotation = true;
+
+			world.addBody(sphereBody);
+
+			bodies.push( sphereBody );
+
+
+		}
+
+		var schonGetan = false;
+
+		var render = function () {
+
+
+		   console.log('zeit'+parseInt(clock.getElapsedTime()));
+		   console.log('meshes1'+meshes1.length);
+
+			camera.updateMatrixWorld();
+
+      requestAnimationFrame(render);
+
+			 if(parseInt(clock.getElapsedTime()) % 3 === 0)
+			  {
+			   if(schonGetan === false)
+			    {
+
+				addBall(
+				Math.random() * 10,
+				Math.random() * 10,
+				Math.random() * 10);
+
+				console.log(ballCounter);
+
+				if(meshes1.length>5)
+				{
+
+
+				scene.remove(meshes1[ballCounter]);
+
+				meshes1.slice(0);
+
+				scene.remove(meshes2[ballCounter]);
+				scene.remove(meshes3[ballCounter]);
+
+
+
+				ballCounter++;
+				}
+
+				schonGetan = true;
+
+
+				}
+			  }
+			  else
+			  {
+				 schonGetan = false;
+			  }
+
+
+			world.step( 1 / 60 );
+
+			for (var i = 0, j = meshes1.length; i < j; i ++){
+
+				var mesh1 = meshes1[ i ];
+				var mesh2 = meshes2[ i ];
+				var mesh3 = meshes3[ i ];
+
+				var body = bodies[ i ];
+
+				pos = body.position;
+				quat = body.quaternion;
+
+				mesh1.position.x = pos.x;
+				mesh1.position.y = pos.y;
+				mesh1.position.z = pos.z;
+
+				mesh2.position.x = pos.x;
+				mesh2.position.y = pos.y;
+				mesh2.position.z = pos.z;
+
+				mesh3.position.x = pos.x;
+				mesh3.position.y = pos.y;
+				mesh3.position.z = pos.z;
+
+				mesh1.rotation.x = quat.x;
+				mesh1.rotation.y = quat.y;
+				mesh1.rotation.z = quat.z;
+
+				mesh2.rotation.x = quat.x;
+				mesh2.rotation.y = quat.y;
+				mesh2.rotation.z = quat.z;
+
+				mesh3.rotation.x = quat.x;
+				mesh3.rotation.y = quat.y;
+				mesh3.rotation.z = quat.z;
+
+
+			}
+
+			renderer.render( scene, camera );
+
+		};
+
+		init();
+		render();
+	 </script>
+	</body>
+</html>
