@@ -1,0 +1,156 @@
+<html>
+	<head>
+		<title>Ball Games</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				background-color: #ffffff;
+				margin: 0;
+				overflow: hidden;
+			}
+		</style>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+	</head>
+	<body>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script>
+
+	 <script>
+
+		var renderer, scene, camera;
+		var manager, controls, effect;
+		var clock;
+
+		var geometry, material;
+
+		var mesh;
+		var meshes = [], bodies = [];
+
+		var world;
+
+		var body;
+
+		var init = function () {
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setPixelRatio( window.innerWidth/window.innerHeight);
+
+			renderer.shadowMap.enabled = true;
+      renderer.shadowMapSoft = true;
+
+			document.body.appendChild( renderer.domElement );
+
+			scene = new THREE.Scene();
+			scene.fog = new THREE.Fog(0x000000,1,100);
+
+			camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500);
+			camera.position.set(5,1,15);
+
+			clock = new THREE.Clock();
+
+      var light, materials;
+      scene.add( new THREE.AmbientLight( 0x666666 ) );
+      light = new THREE.DirectionalLight( 0xffffff);
+      var d = 500;
+      light.position.set( 0, 500, 500 );
+      light.castShadow = true;
+      light.shadowMapWidth = 2048;
+      light.shadowMapHeight = 2048;
+      light.shadowCameraLeft = -d;
+      light.shadowCameraRight = d;
+      light.shadowCameraTop = d;
+      light.shadowCameraBottom = -d;
+      light.shadowCameraFar = 3*d;
+      light.shadowCameraNear = d;
+      light.shadowDarkness = 0.5;
+      scene.add( light );
+
+
+			geometry = new THREE.SphereGeometry( 1,32,32 );
+			material = new THREE.MeshLambertMaterial( { color: 0xff0000, shading: THREE.FlatShading } ) ;
+
+			//physics
+			world = new CANNON.World();
+			world.broadphase = new CANNON.NaiveBroadphase();
+			world.gravity.set( 0,-1,0 );
+
+			//physical object
+			var groundShape = new CANNON.Plane();
+			var groundBody = new CANNON.Body({ mass: 0, shape: groundShape });
+			groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,1,1),-Math.PI/2);
+			world.add(groundBody);
+
+			//ground
+			var groundGeometry = new THREE.PlaneGeometry (300,300,32);
+			var groundMaterial = new THREE.MeshLambertMaterial ( { color: 0x0000ff} );
+			var ground = new THREE.Mesh( groundGeometry, groundMaterial);
+			ground.receiveShadow = true;
+			ground.rotation.x = -Math.PI / 2;
+			scene.add(ground);
+
+		};
+
+		var addBall = function (x,y,z){
+
+			mesh = new THREE.Mesh( geometry, material );
+			mesh.castShadow = true;
+			mesh.receiveShadow = true;
+
+			scene.add( mesh );
+
+			meshes.push( mesh );
+
+			var radius = 1; // m
+			var sphereBody = new CANNON.Body({
+				mass: 0.05, // kg
+				position: new CANNON.Vec3(x, y, z ), // m
+				velocity: new CANNON.Vec3(0, -50, 0), // m
+				shape: new CANNON.Sphere(radius)
+				});
+
+			world.addBody(sphereBody);
+
+			bodies.push( sphereBody );
+		}
+
+		var render = function () {
+
+			camera.updateMatrixWorld();
+
+      requestAnimationFrame(render);
+
+      // controls.update();
+
+			 if(Math.round(clock.getElapsedTime()) % 7 == 0)
+			  {
+			   for(i=0;i<1;i++){
+    			  addBall(
+    				Math.random() * 10,
+    				Math.random() * 10,
+    				Math.random() * 10);
+  				}
+			  }
+
+
+			world.step( 1 / 60 );
+
+			for (var i = 0, j = meshes.length; i < j; i ++){
+
+				var mesh = meshes[ i ];
+				var body = bodies[ i ];
+
+				mesh.position.copy( body.position );
+
+			}
+
+			renderer.render( scene, camera );
+
+		};
+
+		init();
+		render();
+	 </script>
+	</body>
+</html>
