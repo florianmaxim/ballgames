@@ -35,10 +35,9 @@
 
 		var init = function () {
 
-			renderer = new THREE.WebGLRenderer();
-			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize( window.innerWidth, window.innerHeight );
       renderer.setPixelRatio( window.innerWidth/window.innerHeight);
-
 			renderer.shadowMap.enabled = true;
       renderer.shadowMapSoft = true;
 
