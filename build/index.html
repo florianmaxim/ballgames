@@ -49,6 +49,16 @@
 			camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500);
 			camera.position.set(5,1,15);
 
+			window.addEventListener( 'resize', onWindowResize, false );
+
+			function onWindowResize(){
+			  renderer.setSize(window.innerWidth,window.innerHeight);
+			  renderer.setPixelRatio( window.devicePixelRatio );
+
+			  camera.aspect = window.innerWidth / window.innerHeight;
+			  camera.updateProjectionMatrix();
+			}
+
 			clock = new THREE.Clock();
 
       var light, materials;
